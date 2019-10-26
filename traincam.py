@@ -8,20 +8,25 @@ from random import random
 video_stream_path = 0 #'http://192.168.0.190:8080/stream/video.mjpeg'
 
 def is_frame_dangerous(frame):
-    return random() > 0.97 # TODO
+    return random() > 0.80 # TODO
 
 class TrainCam:
     
     def __init__(self):
         self.cap = cv2.VideoCapture(video_stream_path)
         self.danger = False
+        self.prev_danger = False
         self.running = True
         self.job = threading.Thread(target=self.cam_check)
     
     def cam_check(self):
         while self.running:
             ret, frame = self.cap.read()
-            self.danger = is_frame_dangerous(frame)
+            cur_danger = is_frame_dangerous(frame)
+            if cur_danger == self.prev_danger:
+                self.danger = cur_danger
+            self.prev_danger = cur_danger
+            
     
     def start(self):
         self.job.start()
