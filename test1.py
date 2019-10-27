@@ -9,9 +9,9 @@ feature_params = dict( maxCorners = 100,
                        blockSize = 4 )
 
 # Parameters for lucas kanade optical flow
-lk_params = dict( winSize  = (15,15),
-                  maxLevel = 2,
-                  criteria = (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 0.03))
+lk_params = dict( winSize  = (5,5),
+                  maxLevel = 3,
+                  criteria = (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 20, 0.03))
 
 # Create some random colors
 color = np.random.randint(0,255,(100,3))
@@ -66,9 +66,9 @@ while(1):
             c,d = old.ravel()
             avg_dir += (new - old)
             mask = cv2.line(mask, (a,b),(c,d), color[i].tolist(), 2)
-            frame = cv2.circle(frame,(a,b), 3, color[i].tolist(),-1)
+            #frame = cv2.circle(frame,(a,b), 3, color[i].tolist(),-1)
         
-        img = cv2.add(frame,mask)
+        img = frame#cv2.add(frame,mask)
         
         if last_dirs is None:
             last_dirs = np.zeros((7, 2))
@@ -80,7 +80,7 @@ while(1):
         avg_dir = np.mean(last_dirs, axis=0)
         avg_dir[1] = 0
         center = (img.shape[1]//2, img.shape[0]//2)
-        dir_mask = cv2.line(img, center, tuple((avg_dir / 3).astype(int) + center), [255, 255, 255], 4)
+        #img = cv2.line(img, center, tuple((avg_dir / 3).astype(int) + center), [255, 255, 255], 4)
         
         
         diffs = np.zeros(good_new.shape[0])
@@ -93,8 +93,8 @@ while(1):
         
         diff_mask = np.zeros_like(img)
         for i,(new, old) in enumerate(zip(good_new, good_old)):
-            diff_mask = cv2.circle(frame, tuple(new), int(diffs[i] * 10), [255, 0, 0], -1)
-        img = cv2.add(img, diff_mask)
+            diff_mask = cv2.circle(diff_mask, tuple(new), int(diffs[i] * 10), [255, 0, 0], -1)
+        #img = cv2.add(img, diff_mask)
 
         cv2.imshow('frame',img)
         k = cv2.waitKey() & 0xff
