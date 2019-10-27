@@ -9,23 +9,23 @@ import numpy as np
 
 from traincam import TrainCam
 
-max_speed = 1200
+max_speed = 1400
 segments_speed = {
     '26': max_speed,
-    '24': 550,
-    '23': max_speed+200,
+    '24': 750,
+    '23': max_speed,
     '22': max_speed,
-    '34': max_speed+100,
+    '34': max_speed,
     '35': max_speed,
     '33': max_speed,
     '31': 900,
-    '32': 800,
+    '32': 750,
     '21': max_speed,
     '27': max_speed,
-    '25': 1000,
-    '13': 550,
-    '12': max_speed+200,
-    '11': 700
+    '25': max_speed,
+    '13': 750,
+    '12': max_speed,
+    '11': 900,
 }
 
 train_base_url = 'http://127.0.0.1:5000' #'http://192.168.0.180'
@@ -37,6 +37,7 @@ class TrainController:
         self.tick_time = tick_time
         self.speed = 0
         self.stop_timer = 0
+        self.cur_segs = {}
         self.cam = TrainCam()
         self.running = True
         self.job = threading.Thread(target=self.control)
@@ -45,7 +46,6 @@ class TrainController:
         if des_speed != self.speed:
             resp = requests.post(train_base_url + '/motor?params=' + str(des_speed))
             if resp.ok:
-                self.make_buzz(randint(400,600))
                 self.speed = des_speed
 
     def make_buzz(self, freq=500):
@@ -57,6 +57,8 @@ class TrainController:
             
             if self.cam.is_dangerous():
                 print('cam sees something dangerous, stopping')
+                self.make_buzz()
+                # if 26 in self.cur_segs: TODO switch the rail
                 self.stop_timer = int(1.0 / self.tick_time)
             if self.stop_timer > 0:
                  self.stop_timer -= 1
@@ -65,15 +67,13 @@ class TrainController:
                 resp = requests.get(stats_base_url + '/rest/items')
                 if resp.ok:
                     sections = json.loads(resp.text)['track']['rail_sections']
-                    cur_segs = []
-                    cur_segs_speed = []
+                    cur_segs = {}
                     for seg, speed in segments_speed.items():
                         if sections[seg]['state'] == 0:
-                            cur_segs.append(seg)
-                            cur_segs_speed.append(speed)
+                            cur_segs[seg] = speed
                     print('segs: ' + ','.join(cur_segs))
-                    if len(cur_segs_speed) > 0:
-                        self.set_speed(int(np.mean(cur_segs_speed)))
+                    if len(cur_segs) > 0:
+                        self.set_speed(int(np.mean([s for s in cur_segs.values()])))
     
     def start(self):
         self.set_speed(max_speed)
