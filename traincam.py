@@ -40,7 +40,7 @@ class TrainCam:
         #finetuned_model.compile(optimizer=Adam(lr=0.0001), loss='categorical_crossentropy', metrics=['accuracy'])
         #finetuned_model.load_weights('classification.h5')
         #return finetuned_model
-        return load_model('classification.h5') # works only for keras>=2.3.x
+        return load_model('classification_79.h5') # works only for keras>=2.3.x
     
     def cam_proc(self):
         while self.running:
@@ -48,7 +48,7 @@ class TrainCam:
             #cv2.imshow('frame', frame)
             #k = cv2.waitKey(5) & 0xff
             cur_danger = self.make_danger_prediction(frame)
-            print(frame.shape, cur_danger)
+            #print(frame.shape, cur_danger)
             if cur_danger == self.prev_danger:
                 self.danger = cur_danger
             self.prev_danger = cur_danger
@@ -72,6 +72,7 @@ class TrainCam:
 
     
     def start(self):
+        print('starting train cam processor')
         self.frame_processor.start()
         self.frame_poller.start()
     
@@ -79,6 +80,9 @@ class TrainCam:
         return self.danger
     
     def stop(self):
+        if not self.running:
+            return
+        print('stopping train cam processor')
         self.running = False
         self.frame_processor.join()
         self.frame_poller.join()

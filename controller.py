@@ -44,19 +44,20 @@ class TrainController:
 
     def set_speed(self, des_speed):
         if des_speed != self.speed:
-            resp = requests.post(train_base_url + '/motor?params=' + str(des_speed))
+            resp = requests.post(train_base_url + '/motor?params=' + str(des_speed), timeout=2*self.tick_time)
             if resp.ok:
                 self.speed = des_speed
 
     def make_buzz(self, freq=500):
-        pass#requests.post(train_base_url + '/buzzer?params=' + str(freq))
+        pass#requests.post(train_base_url + '/buzzer?params=' + str(freq), timeout=2*self.tick_time)
     
     def control(self):
         while self.running:
             time.sleep(self.tick_time)
             
             if self.cam.is_dangerous():
-                print('cam sees something dangerous, stopping')
+                if self.stop_timer == 0:
+                    print('cam sees something dangerous, stopping')
                 self.make_buzz()
                 # if 26 in self.cur_segs: TODO switch the rail
                 self.stop_timer = int(1.0 / self.tick_time)
@@ -64,18 +65,19 @@ class TrainController:
                  self.stop_timer -= 1
                  self.set_speed(0)
             else:
-                resp = requests.get(stats_base_url + '/rest/items')
+                resp = requests.get(stats_base_url + '/rest/items', timeout=2*self.tick_time)
                 if resp.ok:
                     sections = json.loads(resp.text)['track']['rail_sections']
                     cur_segs = {}
                     for seg, speed in segments_speed.items():
                         if sections[seg]['state'] == 0:
                             cur_segs[seg] = speed
-                    print('segs: ' + ','.join(cur_segs))
+                    #print('segs: ' + ','.join(cur_segs))
                     if len(cur_segs) > 0:
                         self.set_speed(int(np.mean([s for s in cur_segs.values()])))
     
     def start(self):
+        print('starting train controller')
         self.set_speed(max_speed)
         self.cam.start()
         self.job.start()
@@ -86,6 +88,9 @@ class TrainController:
         self.job.join()
     
     def stop(self):
+        if not self.running:
+            return
+        print('stopping train controller')
         self.running = False
         self.cam.stop()
         self.job.join()
