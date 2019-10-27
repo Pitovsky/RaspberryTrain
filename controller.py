@@ -56,7 +56,7 @@ class TrainController:
             time.sleep(self.tick_time)
             
             if self.cam.is_dangerous():
-                print('camview seems to be dangerous, stopping')
+                print('cam sees something dangerous, stopping')
                 self.stop_timer = int(1.0 / self.tick_time)
             if self.stop_timer > 0:
                  self.stop_timer -= 1
@@ -95,7 +95,7 @@ class TrainController:
 if __name__ == '__main__':
     tc = TrainController()
     def signal_handler(sig, frame):
-        print('You pressed Ctrl+C!')
+        print('SIGTERM recieved, stopping controller')
         tc.stop()
         sys.exit(0)
     signal.signal(signal.SIGINT, signal_handler)
